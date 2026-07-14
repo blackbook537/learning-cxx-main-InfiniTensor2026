@@ -10,17 +10,31 @@ class DynFibonacci {
 
 public:
     // TODO: 实现动态设置容量的构造器
-    DynFibonacci(int capacity): cache(new ?), cached(?) {}
+    DynFibonacci(int capacity): cache(new size_t[capacity]), cached(2) {
+        cache[0] = 0;
+        cache[1] = 1;
+    }
 
     // TODO: 实现复制构造器
-    DynFibonacci(DynFibonacci const &) = delete;
+    DynFibonacci(DynFibonacci const &other){
+        // 深拷贝：分配足够容纳原对象所有已计算数据的数组
+        int usedSize = other.cached + 1;
+        cache = new size_t[usedSize];
+        cached = other.cached;
+        // 逐元素复制缓存数据
+        for (int i = 0; i <= cached; ++i){
+            cache[i] = other.cache[i];
+        }
+    }
 
     // TODO: 实现析构器，释放缓存空间
-    ~DynFibonacci();
+    ~DynFibonacci(){
+        delete[] cache;
+    }
 
     // TODO: 实现正确的缓存优化斐波那契计算
     size_t get(int i) {
-        for (; false; ++cached) {
+        for (; cached <= i; ++cached) {
             cache[cached] = cache[cached - 1] + cache[cached - 2];
         }
         return cache[i];
@@ -37,6 +51,12 @@ public:
         ASSERT(false, "i out of range");
     }
 };
+
+// 拷贝构造参数必须是const 引用，不能传值：传值会无限递归调用拷贝构造，编译报错；
+// 禁止浅拷贝：只要类持有堆指针，必须手动实现深拷贝，不能依赖编译器默认拷贝构造；
+// const 成员函数内不能修改任何成员变量，因此无法扩展缓存，仅能查询已有数据；
+// new[] 和 delete[] 严格配对，单个变量用new/delete，数组用new[]/delete[]。
+// 当类持有 new 动态分配的堆资源时，深拷贝为新对象创建独立副本资源，解决浅拷贝带来的「双重释放崩溃」和「数据互相篡改」两大致命问题。
 
 int main(int argc, char **argv) {
     DynFibonacci fib(12);
