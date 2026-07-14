@@ -4,12 +4,19 @@
 
 template<class T>
 struct Tensor4D {
-    unsigned int shape[4];
+    unsigned int shape[4];//张量形状 shape[4] = [N, C, H, W] 四个维度；
     T *data;
 
     Tensor4D(unsigned int const shape_[4], T const *data_) {
         unsigned int size = 1;
         // TODO: 填入正确的 shape 并计算 size
+        unsigned int d;
+        for(d = 0; d < 4; ++d){
+            shape[d] = shape_[d];
+        }
+        for(d = 0; d < 4; ++d){
+            size *= shape[d];
+        }
         data = new T[size];
         std::memcpy(data, data_, size * sizeof(T));
     }
@@ -28,6 +35,41 @@ struct Tensor4D {
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
         // TODO: 实现单向广播的加法
+        // 计算自身张量步长
+        unsigned int s0 = shape[1] * shape[2] * shape[3];
+        unsigned int s1 = shape[2] * shape[3];
+        unsigned int s2 = shape[3];
+        unsigned int s3 = 1;
+        unsigned int total = shape[0] * s0;
+
+        // 计算others张量步长
+        unsigned int os0 = others.shape[1] * others.shape[2] * others.shape[3];
+        unsigned int os1 = others.shape[2] * others.shape[3];
+        unsigned int os2 = others.shape[3];
+        unsigned int os3 = 1;
+
+        // 遍历自身所有元素
+        for(unsigned int i = 0; i < total; ++i){
+            // 一维索引i 拆分四维坐标 n,c,h,w
+            unsigned int n = i / s0;
+            unsigned int rem = i % s0;
+            unsigned int c = rem / s1;
+            rem = rem % s1;
+            unsigned int h = rem / s2;
+            unsigned int w = rem % s2;
+
+            // 广播规则：others维度为1则取坐标0，否则取原坐标
+            unsigned int on = (others.shape[0] == 1) ? 0 : n;
+            unsigned int oc = (others.shape[1] == 1) ? 0 : c;
+            unsigned int oh = (others.shape[2] == 1) ? 0 : h;
+            unsigned int ow = (others.shape[3] == 1) ? 0 : w;
+
+            // 计算others对应一维索引j
+            unsigned int j = on * os0 + oc * os1 + oh * os2 + ow * os3;
+            // 广播加法
+            data[i] += others.data[j];
+        }
+
         return *this;
     }
 };
