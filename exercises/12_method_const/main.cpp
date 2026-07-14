@@ -5,7 +5,8 @@
 struct Fibonacci {
     int numbers[11];
     // TODO: 修改方法签名和实现，使测试通过
-    int get(int i) {
+    int get(int i) const{//const 成员函数的规则：这个函数不会修改调用它的对象的任何成员变量。
+        return numbers[i];
     }
 };
 
